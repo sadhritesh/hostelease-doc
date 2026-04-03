@@ -471,4 +471,323 @@ Most real‑world failures happen because NFRs were ignored.
 *   **NFR‑19:** Data shall be recoverable in case of system failure.
 
 ***
+# ✅ Step 9: Database Schema Design
+
+**Hostel Management System**
+
+## 🧠 Architect mindset for Step 9
+
+Till Step 8, we identified:
+
+*   ✅ Entities
+*   ✅ Responsibilities
+*   ✅ States & flows
+
+Now we answer:
+
+> **“How should data be stored so it is consistent, scalable, and easy to query?”**
+
+This is where **logical design → physical DB schema**.
+
+***
+
+## ✅ Step 9.1: Identify Core Entities (From Step 8)
+
+From LLD, we already have these **business entities**:
+
+*   User
+*   Hostel
+*   RoomCategory
+*   Room
+*   Student
+*   Allocation (Check‑in)
+*   Payment
+*   Deposit
+*   Notice
+
+✅ Each entity will normally become **one table**.
+
+***
+
+## ✅ Step 9.2: Decide Database Type
+
+For Hostel Management System:
+
+✅ **Relational Database (PostgreSQL / MySQL)**
+
+### Why?
+
+*   Strong relationships
+*   Consistency is critical
+*   Transactions needed (allocation, checkout)
+
+***
+
+## ✅ Step 9.3: Define Tables One by One (Logical → Physical)
+
+I’ll list:
+
+*   Purpose
+*   Key columns
+*   Relationships
+
+(No SQL yet — design first)
+
+***
+
+### 👤 **User Table**
+
+Used for **Admin, Hostel Manager, Student login**
+
+**User**
+
+*   UserId (PK)
+*   Name
+*   Email (UNIQUE)
+*   PasswordHash
+*   Role (ADMIN / MANAGER / STUDENT)
+*   IsActive
+*   CreatedAt
+
+✅ Role‑based access starts here.
+
+***
+
+### 🏢 **Hostel Table**
+
+**Hostel**
+
+*   HostelId (PK)
+*   HostelName
+*   Address
+*   CreatedBy (Admin UserId)
+*   IsActive
+
+✅ One system → many hostels supported.
+
+***
+
+### 🛏 **RoomCategory Table**
+
+Defined by **Admin**.
+
+**RoomCategory**
+
+*   CategoryId (PK)
+*   CategoryName (Single, Double, Triple)
+*   MaxOccupancy
+*   MonthlyRent
+*   DepositAmount
+*   HostelId (FK)
+
+✅ Category belongs to a hostel.
+
+***
+### 👦 **HostelManagerAssignment Table**
+
+*  AssignmentId (PK)
+*  HostelId (FK)
+*  ManagerUserId (FK → User)
+*  AssignedDate
+*  IsActive
+
+***
+
+### 🚪 **Room Table**
+
+**Room**
+
+*   RoomId (PK)
+*   RoomNumber
+*   CategoryId (FK)
+*   HostelId (FK)
+*   RoomStatus (VACANT / OCCUPIED / MAINTENANCE)
+
+✅ Room status is critical for allocation.
+
+***
+
+### 🎓 **Student Table**
+
+Student is also a user, but has **hostel‑specific data**.
+
+**Student**
+
+*   StudentId (PK)
+*   UserId (FK → User)
+*   HostelId (FK)
+*   AdmissionDate
+*   StudentStatus (REGISTERED / CHECKED\_IN / CHECKED\_OUT)
+
+✅ Separation keeps data clean.
+
+***
+
+### 🔁 **Allocation Table (Most Important)**
+
+Represents **Check‑in / Stay history**.
+
+**Allocation**
+
+*   AllocationId (PK)
+*   StudentId (FK)
+*   RoomId (FK)
+*   CheckInDate
+*   CheckOutDate (nullable)
+*   IsActive
+
+✅ One student → many allocations over time  
+✅ One room → many allocations over time (history)
+
+***
+
+### 💰 **Payment Table**
+
+Tracks hostel fees.
+
+**Payment**
+
+*  PaymentId (PK)
+*  AllocationId (FK) 
+*  StudentId (FK)
+*  Amount
+*  PaymentDate 
+*  PaymentType (MONTHLY / EXTRA)
+*  BillingMonth ✅ optional (YYYY-MM)
+*  PaymentStatus
+
+✅ Keeps clear payment history.
+
+***
+
+### 🔒 **Deposit Table**
+
+Handled during check‑in and checkout.
+
+**Deposit**
+
+*   DepositId (PK)
+*   StudentId (FK)
+*   AllocationId (FK)
+*   DepositAmount
+*   CollectedDate
+*   RefundedDate (nullable)
+*   RefundStatus
+
+✅ Clean way to handle deposit lifecycle.
+
+***
+
+### 📢 **Notice Table**
+
+**Notice**
+
+*   NoticeId (PK)
+*   HostelId (FK)
+*   CreatedBy (Manager UserId)
+*   Title
+*   Message
+*   CreatedAt
+*   IsActive
+
+✅ Hostel‑specific notices.
+
+***
+
+## ✅ Step 9.4: Define Relationships (Very Important ⭐)
+
+### ✅ Key Relationships
+
+*   Hostel → RoomCategory (1‑N)
+*   Hostel → Room (1‑N)
+*   Hostel → HostelManagerAssignment (1-N)
+*   User   → HostelManagerAssignment (1‑N)
+*   RoomCategory → Room (1‑N)
+*   User → Student (1‑1)
+*   Student → Allocation (1‑N)
+*   Room → Allocation (1‑N)
+*   Allocation → Payment (1‑N)
+*   Allocation → Deposit (1‑1)
+  
+*   Many‑to‑Many (Important 💡)
+    Hostel ↔ User (MANAGER)
+    via HostelManagerAssignment
+
+✅ These relationships prevent bad data.
+
+***
+
+## ✅ Step 9.5: Apply Normalization (Up to 3NF)
+
+✅ No duplicate fields  
+✅ No derived data stored  
+✅ History preserved via Allocation
+
+Example:
+
+*   DO NOT store room number in Student table
+*   Always derive via Allocation → Room
+
+✅ This avoids inconsistencies.
+
+***
+
+## ✅ Step 9.6: Constraints (Data Safety)
+
+### ✅ Must‑Have Constraints
+
+*   UNIQUE(email) on User
+*   FK constraints on:
+    *   Student → User
+    *   Allocation → Student, Room
+*   CHECK constraints on:
+    *   RoomStatus
+    *   StudentStatus
+
+✅ DB itself protects system integrity.
+
+***
+
+## ✅ Step 9.7: Indexing Strategy (Performance)
+
+Create indexes on:
+
+*   StudentId (Payments, Allocations)
+*   RoomId (Allocations)
+*   HostelId (Rooms, Notices)
+*   UserId (Login)
+
+⚠️ Avoid over‑indexing.
+
+***
+
+## ✅ Step 9.8: State‑Driven Design (Very Important)
+
+### ✅ Student State Transitions
+
+*   REGISTERED → CHECKED\_IN → CHECKED\_OUT
+
+### ✅ Room State Transitions
+
+*   VACANT → OCCUPIED → VACANT
+
+✅ Enforced via application + DB validation.
+
+***
+
+## ✅ Final Output of Step 9
+
+You now have:
+✅ Logical data model  
+✅ Physical DB schema design  
+✅ Relationships & constraints  
+✅ Index strategy  
+✅ Ready for ORM mapping (EF Core)
+
+This is usually delivered as:
+
+*   ER Diagram
+*   DB Design Document
+
+***
 

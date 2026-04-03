@@ -471,6 +471,151 @@ Most real‑world failures happen because NFRs were ignored.
 *   **NFR‑19:** Data shall be recoverable in case of system failure.
 
 ***
+# ✅ Step 6: System Boundaries & Assumptions
+
+**Hostel Management System**
+
+## 🧠 Architect mindset for Step 6
+
+At this stage, we must **protect the system scope**.
+
+Senior architects always answer this question:
+
+> **“What is this system responsible for — and what is it NOT responsible for?”**
+
+If you skip this step:
+
+*   Stakeholders expect extra features
+*   Scope keeps expanding
+*   Project delays start
+
+***
+
+## ✅ What are System Boundaries? (Short)
+
+> **System boundaries define what functionality is inside the system and what lies outside it.**
+
+***
+
+## ✅ What are Assumptions? (Short)
+
+> **Assumptions are conditions we expect to be true for the system to function correctly.**
+
+If assumptions change → design may need change.
+
+***
+
+# ✅ Step 6.1: Define **IN‑SCOPE** Functionality
+
+These are **responsibilities of Hostel Management System**.
+
+### ✅ In‑Scope (Hostel Management System WILL DO)
+
+✅ User management (Admin, Manager, Student)  
+✅ Hostel creation and configuration  
+✅ Room and room category management  
+✅ Student registration  
+✅ Room allocation (check‑in) and checkout  
+✅ Payment and deposit tracking (record‑keeping)  
+✅ Hostel‑specific notices  
+✅ Viewing reports and status (vacancy, payments)
+
+📌 These features are **fully owned** by this system.
+
+***
+
+# ✅ Step 6.2: Define **OUT‑OF‑SCOPE** Functionality
+
+These are **NOT responsibilities of the system**, even if related.
+
+### ❌ Out‑of‑Scope (System will NOT DO)
+
+❌ Actual online payment processing (UPI, card transactions)  
+❌ Bank settlement or refunds via banking systems  
+❌ Attendance tracking (daily in/out)  
+❌ CCTV or biometric integrations  
+❌ Food/mess billing and management  
+❌ Government hostel compliance/legal workflows
+
+✅ These may be **future integrations**, not core scope.
+
+***
+
+## ✅ Importance of Out‑of‑Scope
+
+If this is not defined clearly:
+
+*   “Can you also add this small thing?” 👀
+*   Suddenly system becomes huge
+
+Senior architects **draw firm boundaries**.
+
+***
+
+# ✅ Step 6.3: Identify **External Systems / Dependencies**
+
+These are systems **outside your boundary** but may interact.
+
+### ✅ External Dependencies (If integrated)
+
+*   Payment Gateway (optional, future)
+*   Email/SMS Notification Service
+*   Identity provider (if SSO added later)
+
+✅ Your system:
+
+*   **Sends requests**
+*   **Handles responses**
+*   Does NOT control their internals
+
+***
+
+# ✅ Step 6.4: Define **Assumptions**
+
+These are **important & often ignored**.
+
+### ✅ Key System Assumptions
+
+*   Each student is assigned to **only one room at a time**
+*   A room belongs to **only one hostel**
+*   Room categories are created **before** rooms
+*   Hostel Managers manage **only assigned hostels**
+*   Students can view **only their own data**
+*   Payments are recorded manually or via offline confirmation
+*   System users have internet access
+
+📌 If any assumption changes → design must be revisited
+
+***
+
+# ✅ Step 6.5: Why Step 6 Is Critical (Real‑World Reason)
+
+This step:
+✅ Prevents scope creep  
+✅ Protects developers from unclear expectations  
+✅ Helps accurate estimation  
+✅ Avoids future conflicts with stakeholders
+
+Senior architects **never skip this step**.
+
+***
+
+## ✅ Output of Step 6 (Deliverable)
+
+By end of Step 6, you should have:
+
+✅ Clear IN‑SCOPE list  
+✅ Clear OUT‑OF‑SCOPE list  
+✅ External dependencies identified  
+✅ Documented assumptions
+
+This is usually added to:
+
+*   SRS
+*   HLD
+*   Architecture document
+
+***
 # ✅ Step 9: Database Schema Design
 
 **Hostel Management System**

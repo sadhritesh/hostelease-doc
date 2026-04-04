@@ -58,7 +58,7 @@ This step should describe **WHY** each actor uses the system (not technical stuf
 
 #### Hostel Manager
 
-*   Login to the system
+*   Login using system authentication (handled by Identity)
 *   View vacant rooms
 *   Register student / resident
 *   Create rooms and map them to room categories (defined by Admin)
@@ -251,8 +251,9 @@ These become:
 
 # ✅ Step 4.1: FRs for **Authentication & Access**
 
-**FR‑1:** The system shall allow Admin, Hostel Manager, and Student to log in using valid credentials.  
-**FR‑2:** The system shall restrict system features based on user role.
+**FR‑1:** The system shall use ASP.NET Core Identity for user authentication.  
+**FR‑2:** The system shall allow users to log in using credentials managed by the Identity system.
+**FR-3:** The system shall enforce role-based access control using Identity roles (ADMIN, MANAGER, STUDENT).
 
 📌 (Role‑based access is a must-have)
 
@@ -558,6 +559,7 @@ These are systems **outside your boundary** but may interact.
 
 ### ✅ External Dependencies (If integrated)
 
+*   ASP.NET Core Identity for authentication and user management
 *   Payment Gateway (optional, future)
 *   Email/SMS Notification Service
 *   Identity provider (if SSO added later)
@@ -711,9 +713,11 @@ Inside backend, we logically split responsibilities.
 
 ### ✅ Core High‑Level Components
 
-*   **Auth & User Management**
-    *   Login
-    *   Roles (Admin / Manager / Student)
+*   **Identity Module (ASP.NET Core Identity)**
+    *   User authentication (login/logout)
+    *   Password management
+    *   Role management (Admin, Manager, Student)
+    *   User storage
 
 *   **Hostel Management**
     *   Hostel creation
@@ -739,8 +743,6 @@ Inside backend, we logically split responsibilities.
 
 *   **Notice Management**
     *   Create & view notices
-
-✅ These are **logical services**, not deployment decisions yet.
 
 ***
 
@@ -874,218 +876,6 @@ This step bridges **architecture → code**.
 ✅ Code‑ready thinking  
 ✅ Still design‑first, not coding yet
 
-***
-
-## ✅ Step 8.1: Pick ONE Core Module First
-
-Never design everything together.
-
-For Hostel Management System, start with the **most critical module**:
-
-> ✅ **Room Allocation / Check‑In Module**
-
-Why?
-
-*   Core business flow
-*   Touches student, room, payment
-
-***
-
-## ✅ Step 8.2: Identify Responsibilities of the Module
-
-### 🧩 Room Allocation Module is responsible for:
-
-*   Allocating rooms to students
-*   Validating availability
-*   Updating student and room status
-
-❌ Not responsible for:
-
-*   Authentication
-*   UI
-*   Report generation
-
-✅ **Single Responsibility Principle**
-
-***
-
-## ✅ Step 8.3: Identify Core Classes (Conceptual)
-
-Now think in **objects**, not tables.
-
-### ✅ Core Classes (Example)
-
-*   `Student`
-*   `Room`
-*   `RoomCategory`
-*   `Allocation`
-*   `HostelManagerService`
-*   `StudentRepository`
-*   `RoomRepository`
-
-✅ Each class does **one job**
-
-***
-
-## ✅ Step 8.4: Define Class Responsibilities
-
-### 📘 `Student`
-
-*   Holds student details
-*   Knows current room & status
-
-### 📘 `Room`
-
-*   Holds room details
-*   Knows availability status
-
-### 📘 `Allocation`
-
-*   Represents check‑in record
-*   Links student ↔ room ↔ dates
-
-### 📘 `HostelManagerService`
-
-*   Orchestrates room allocation
-*   Applies business rules
-
-### 📘 Repositories
-
-*   Handle DB operations (save / fetch)
-
-✅ Business logic ≠ data access
-
-***
-
-## ✅ Step 8.5: Define Method‑Level Design (APIs)
-
-Only method names & intent — not code.
-
-### ✅ `HostelManagerService`
-
-```text
-allocateRoom(studentId, roomId)
-checkoutStudent(studentId)
-```
-
-### ✅ `RoomRepository`
-
-```text
-getVacantRooms()
-updateRoomStatus(roomId)
-```
-
-### ✅ `StudentRepository`
-
-```text
-getStudentById(studentId)
-updateStudentStatus(studentId)
-```
-
-✅ These methods come **directly from use‑cases**
-
-***
-
-## ✅ Step 8.6: Define Interaction Flow (Inside Module)
-
-### ✅ Room Allocation – Internal Flow
-
-1.  `allocateRoom(studentId, roomId)` is called
-2.  Fetch student details
-3.  Validate student not already checked‑in
-4.  Fetch room details
-5.  Validate room is vacant
-6.  Create allocation record
-7.  Update student status → CHECKED‑IN
-8.  Update room status → OCCUPIED
-
-✅ This becomes:
-
-*   Sequence diagram
-*   Service logic
-
-***
-
-## ✅ Step 8.7: Identify Core Entities (For DB Later)
-
-LLD helps identify **entities**, not tables yet.
-
-### ✅ Entities Identified
-
-*   Student
-*   Room
-*   Hostel
-*   RoomCategory
-*   Allocation
-*   Payment
-*   Deposit
-*   Notice
-
-✅ These directly move to **Step 9: DB Schema Design**
-
-***
-
-## ✅ Step 8.8: Define Important States (Very Important ⭐)
-
-### ✅ Student State
-
-*   REGISTERED
-*   CHECKED‑IN
-*   CHECKED‑OUT
-
-### ✅ Room State
-
-*   VACANT
-*   OCCUPIED
-*   MAINTENANCE (optional)
-
-States prevent **invalid operations**.
-
-***
-
-## ✅ Step 8.9: Error & Validation Thinking
-
-As a senior architect, always ask:
-
-> “What should NOT be allowed?”
-
-Examples:
-
-*   Allocate occupied room ❌
-*   Double check‑in ❌
-*   Checkout without active allocation ❌
-
-✅ These become:
-
-*   Validation logic
-*   Exception cases
-
-***
-
-## ❌ What NOT to do in Step 8
-
-❌ Database tables  
-❌ SQL queries  
-❌ UI screens  
-❌ Framework details
-
-✅ Step 8 stays **technology‑neutral**
-
-***
-
-## ✅ Output of Step 8 (Deliverables)
-
-By end of Step 8, you have:
-
-✅ Class list  
-✅ Responsibilities per class  
-✅ Method‑level contracts  
-✅ Interaction flow  
-✅ List of entities
-
-This is what developers use to **start coding confidently**.
-
-
 
 ***
 # ✅ Step 9: Database Schema Design
@@ -1112,7 +902,6 @@ This is where **logical design → physical DB schema**.
 
 From LLD, we already have these **business entities**:
 
-*   User
 *   Hostel
 *   RoomCategory
 *   Room
@@ -1121,6 +910,11 @@ From LLD, we already have these **business entities**:
 *   Payment
 *   Deposit
 *   Notice
+
+*   User data is managed by ASP.NET Core Identity tables:
+     *   AspNetUsers
+     *   AspNetRoles
+     *   AspNetUserRoles
 
 ✅ Each entity will normally become **one table**.
 
@@ -1152,21 +946,7 @@ I’ll list:
 
 ***
 
-### 👤 **User Table**
-
-Used for **Admin, Hostel Manager, Student login**
-
-**User**
-
-*   UserId (PK)
-*   Name
-*   Email (UNIQUE)
-*   PasswordHash
-*   Role (ADMIN / MANAGER / STUDENT)
-*   IsActive
-*   CreatedAt
-
-✅ Role‑based access starts here.
+### 👤 **User Table** : User data is managed by ASP.NET Core Identity tables:
 
 ***
 
@@ -1204,7 +984,7 @@ Defined by **Admin**.
 
 *  AssignmentId (PK)
 *  HostelId (FK)
-*  ManagerUserId (FK → User)
+*  ManagerUserId (FK → User) : AspNetUsers (FK)
 *  AssignedDate
 *  IsActive
 
@@ -1231,7 +1011,7 @@ Student is also a user, but has **hostel‑specific data**.
 **Student**
 
 *   StudentId (PK)
-*   UserId (FK → User)
+*   UserId (FK → User) : AspNetUsers (FK)
 *   HostelId (FK)
 *   AdmissionDate
 *   StudentStatus (REGISTERED / CHECKED\_IN / CHECKED\_OUT)
